@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Auto Translator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .translation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .input-section:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .language-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .swap-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swap-btn:hover {
+            transform: rotate(180deg) scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #outputText {
+            background: #f8f9fa;
+            color: #495057;
+        }
+
+        .auto-translate-info {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .translation-area {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .language-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 AI Auto Translator</h1>
+        
+        <div class="translation-area">
+            <div class="input-section">
+                <div class="language-selector">
+                    <select id="sourceLanguage">
+                        <option value="auto">Auto Detect</option>
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                        <option value="mr">Marathi</option>
+                        <option value="ta">Tamil</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="ja">Japanese</option>
+                    </select>
+                    <button class="swap-btn" onclick="swapLanguages()" title="Swap Languages">⇄</button>
+                    <select id="targetLanguage">
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                        <option value="mr">Marathi</option>
+                        <option value="ta">Tamil</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="ja">Japanese</option>
+                    </select>
+                </div>
+                <textarea 
+                    id="inputText" 
+                    placeholder="Type anything... Auto translation will start in 1 second ✨" 
+                    maxlength="5000"
+                    oninput="updateCharCount()"
+                ></textarea>
+                <div class="char-count" id="charCount">0/5000</div>
+            </div>
+
+            <div class="output-section">
+                <div class="language-selector">
+                    <span style="color: #6c757d;">Translation</span>
+                    <button class="btn btn-secondary" onclick="copyToClipboard()" id="copyBtn" style="padding: 5px 10px; font-size: 12px;">
+                        📋 Copy
+                    </button>
+                </div>
+                <textarea 
+                    id="outputText" 
+                    placeholder="Translation will appear here..." 
+                    readonly
+                ></textarea>
+            </div>
+        </div>
+
+        <div class="auto-translate-info">
+            ⚡ <strong>Auto Mode:</strong> Just start typing! Translation happens automatically as you type.
+            <br>Use <strong>Ctrl+Enter</strong> for manual translation or click the button below.
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="translateText()" id="translateBtn">
+                Translate
+            </button>
+            <button class="btn btn-secondary" onclick="clearAll()">
+                Clear All
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Translating your text...</p>
+        </div>
+
+        <div class="error" id="errorMsg"></div>
+        <div class="success" id="successMsg"></div>
+    </div>
+
+    <script>
+        // API endpoint - will work automatically with Vercel deployment
+        const API_ENDPOINT = '/api/translate';
+
+        // Language mapping for frontend
+        const LANGUAGE_MAP = {
+            'auto': 'Auto Detect',
+            'en': 'English',
+            'hi': 'Hindi',
+            'mr': 'Marathi',
+            'ta': 'Tamil',
+            'fr': 'French',
+            'de': 'German',
+            'ja': 'Japanese'
+        };
+
+        // Auto-translate functionality
+        let autoTranslateTimeout;
+        let isAutoTranslating = false;
+
+        function setupAutoTranslate() {
+            const inputText = document.getElementById('inputText');
+            const sourceLanguage = document.getElementById('sourceLanguage');
+            
+            // Set source to auto-detect by default
+            sourceLanguage.value = 'auto';
+            
+            // Auto-translate on typing (with debounce)
+            inputText.addEventListener('input', function() {
+                clearTimeout(autoTranslateTimeout);
+                const text = this.value.trim();
+                
+                if (text.length > 2) {
+                    autoTranslateTimeout = setTimeout(() => {
+                        if (!isAutoTranslating) {
+                            autoTranslateText();
+                        }
+                    }, 1000);
+                } else {
+                    document.getElementById('outputText').value = '';
+                }
+                
+                updateCharCount();
+            });
+            
+            // Auto-translate on language change
+            document.getElementById('targetLanguage').addEventListener('change', function() {
+                const text = inputText.value.trim();
+                if (text.length > 2) {
+                    setTimeout(autoTranslateText, 300);
+                }
+            });
+        }
+
+        async function autoTranslateText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const targetLanguage = document.getElementById('targetLanguage').value;
+
+            if (!inputText || inputText.length < 3) return;
+
+            isAutoTranslating = true;
+            
+            try {
+                const outputTextarea = document.getElementById('outputText');
+                outputTextarea.value = 'Translating...';
+                outputTextarea.style.opacity = '0.6';
+
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText,
+                        source_language: 'auto',
+                        target_language: targetLanguage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    outputTextarea.value = data.translated_text;
+                    outputTextarea.style.opacity = '1';
+                    updateDetectedLanguage(data.source_language);
+                } else {
+                    outputTextarea.value = '';
+                    outputTextarea.style.opacity = '1';
+                }
+            } catch (error) {
+                console.error('Auto-translate error:', error);
+                document.getElementById('outputText').value = '';
+                document.getElementById('outputText').style.opacity = '1';
+            } finally {
+                isAutoTranslating = false;
+            }
+        }
+
+        function updateDetectedLanguage(detectedLang) {
+            let indicator = document.getElementById('detectedLang');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'detectedLang';
+                indicator.style.cssText = `
+                    font-size: 12px;
+                    color: #667eea;
+                    margin-top: 5px;
+                    font-weight: 500;
+                `;
+                document.querySelector('.input-section .char-count').parentNode.insertBefore(indicator, document.querySelector('.input-section .char-count'));
+            }
+            
+            const langName = LANGUAGE_MAP[detectedLang] || detectedLang;
+            indicator.innerHTML = `🔍 Detected: ${langName}`;
+        }
+
+        function updateCharCount() {
+            const input = document.getElementById('inputText');
+            const count = document.getElementById('charCount');
+            count.textContent = `${input.value.length}/5000`;
+        }
+
+        function swapLanguages() {
+            const source = document.getElementById('sourceLanguage');
+            const target = document.getElementById('targetLanguage');
+            const input = document.getElementById('inputText');
+            const output = document.getElementById('outputText');
+
+            if (source.value === 'auto') {
+                showError('Cannot swap when source is set to Auto Detect');
+                return;
+            }
+
+            const tempValue = source.value;
+            source.value = target.value;
+            target.value = tempValue;
+
+            const tempText = input.value;
+            input.value = output.value;
+            output.value = tempText;
+
+            updateCharCount();
+        }
+
+        async function translateText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+
+            if (!inputText) {
+                showError('Please enter text to translate');
+                return;
+            }
+
+            if (sourceLanguage === targetLanguage && sourceLanguage !== 'auto') {
+                showError('Source and target languages cannot be the same');
+                return;
+            }
+
+            showLoading(true);
+            hideMessages();
+            document.getElementById('translateBtn').disabled = true;
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText,
+                        source_language: sourceLanguage,
+                        target_language: targetLanguage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('outputText').value = data.translated_text;
+                    showSuccess('Translation completed successfully!');
+                    updateDetectedLanguage(data.source_language);
+                } else {
+                    showError(data.error || 'Translation failed');
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                showLoading(false);
+                document.getElementById('translateBtn').disabled = false;
+            }
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText');
+            if (!outputText.value.trim()) {
+                showError('No text to copy');
+                return;
+            }
+
+            outputText.select();
+            document.execCommand('copy');
+            showSuccess('Text copied to clipboard!');
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            updateCharCount();
+            hideMessages();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMsg');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+
+        document.getElementById('inputText').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                translateText();
+            }
+        });
+
+        updateCharCount();
+        setupAutoTranslate();
+    </script>
+</body>
+</html>
